@@ -175,6 +175,6 @@ Parmetros al ejecutar un playbooks
 $ ansible-playbook mysql.yml --become --start-at-task "Update package cache" --step
 ```
 
-/.2
+7.2
 
 
