@@ -295,3 +295,5 @@ El nodo manager tiene la IP: 20.0.1.7.
 El nodo managed-1 tiene la IP: 20.0.1.11.
 El nodo managed-2 tiene la IP: 20.0.1.4.
 ```
+
+
