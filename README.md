@@ -175,6 +175,123 @@ Parmetros al ejecutar un playbooks
 $ ansible-playbook mysql.yml --become --start-at-task "Update package cache" --step
 ```
 
-7.2
+Modificacion de archivos con blockinfile
 
+inserta, actualiza o elimina un bloque de lineas de un archivo. El texto modificado que queda delimitado por lineas que actuan como marcador
 
+blockinfile.yml
+```
+---
+
+- name: Blockinfile to edit files
+  gather_facts: false
+  hosts: all
+  tasks:
+    - name: "Adding Ansible manager and managed nodes to /etc/hosts"
+      blockinfile:
+        name: /etc/hosts            # archivo de modificar
+        block: |                    # block de texto a incluir
+          # Manager
+          20.0.1.7 manager
+
+          # Managed-1
+          20.0.1.11 managed-1
+
+          # Managed-2
+          20.0.1.4 managed-2
+        marker: "# {mark} ANSIBLE MANAGED BLOCK manager and managed nodes"     # texto marcador 
+```
+
+```
+$ ansible-playbook blockinfile.yml --become
+```
+Archivo /ect/hosts  estad o final
+```
+127.0.0.1 localhost
+
+....
+
+# BEGIN ANSIBLE MANAGED BLOCK manager and managed nodes 
+# Manager 
+20.0.1.7 manager
+
+# Managed-1
+20.0.1.11 managed-1
+
+# Managed-2
+20.0.1.4 managed-2
+# END ANSIBLE MANAGED BLOCK manager and managed nodes 
+```
+Archivo de variables
+
+La variables definidas en en archivo all.yml seran visibles para todos los playbooks del mismo directorio sin necesidad de indicar o incluir nada.
+
+group_vars/all.yml
+```
+manager: { name: manager, ip: 20.0.1.7 }
+managed_1: { name: managed-1, ip: 20.0.1.11 }
+managed_2: { name: managed-2, ip: 20.0.1.4 }
+```
+Ejemplo usando variables
+
+```
+---
+
+- name: Blockinfile to edit files
+  gather_facts: false
+  hosts: all
+  tasks:
+    - name: "Adding Ansible manager and managed nodes to /etc/hosts"
+      blockinfile:
+        name: /etc/hosts
+        block: |
+          # Manager
+          {{ manager.ip }} {{ manager.name }} 
+
+          # Managed-1
+          {{ managed_1.ip }} {{ managed_1.name }} 
+
+          # Managed-2
+          {{ managed_2.ip }} {{ managed_2.name }} 
+        marker: "# {mark} ANSIBLE MANAGED BLOCK manager and managed nodes"
+```
+
+Usando Templates:
+
+Con template podemos incluir archivos en los nodos administrados sustituyendo previamente las variables que incluyan por sus valores correspondientes.
+
+sample-example.txt
+
+```
+Ejemplo de archivo personsalizado usando templates:
+
+El nodo {{ manager.name }} tiene la IP: {{ manager.ip }}.
+El nodo {{ managed_1.name }} tiene la IP: {{ managed_1.ip }}.
+El nodo {{ managed_2.name }} tiene la IP: {{ managed_2.ip }}.
+```
+playbook template.yml
+
+```
+---
+
+- name: Template to customize files
+  gather_facts: false
+  hosts: all
+  tasks:
+    - name: "Creating customized sample-template.txt in /home/ubuntu/sample-template.txt"
+      template: >
+        src=/home/ubuntu/cursostic/sample-template.txt
+        dest=/home/ubuntu/sample-template.txt
+        owner=ubuntu
+        group=ubuntu
+        mode=0644
+```
+
+Resultado:
+```
+Ejemplo de archivo personsalizado usando templates:
+
+El nodo manager tiene la IP: 20.0.1.7.
+El nodo managed-1 tiene la IP: 20.0.1.11.
+El nodo managed-2 tiene la IP: 20.0.1.4.
+```
